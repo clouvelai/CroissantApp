@@ -93,7 +93,7 @@ You can watch deploys happening in real time on the Railway dashboard (link belo
 
 | What | URL |
 |------|-----|
-| **Live app** | https://frontend-production-95af.up.railway.app |
+| **Live app** | https://croissantclub.app |
 | **Railway dashboard** (deploys, logs) | https://railway.com/project/5695b737-d5ad-42ca-b803-fd12174ffd91 |
 | **Supabase dashboard** (database, photos) | https://supabase.com/dashboard/project/stmkmoiolxlhrjwpriiy |
 | **GitHub repo** (code, triggers deploys) | https://github.com/fnouvel/CroissantApp |
@@ -211,3 +211,26 @@ The Railway dashboard logs are your best friend — almost every problem shows u
 - **Database connection uses port 6543** (Supabase's "transaction pooler"), not the standard 5432. This works better with Railway's multiple server processes.
 - **Photos go to Supabase Storage in production**, not local disk. Railway containers are temporary — files saved to disk would disappear on the next deploy.
 - **The fork**: Railway auto-deploy watches `fnouvel/CroissantApp`. The original code is at `clouvelai/CroissantApp`. In the local git setup, `origin` = fnouvel (push here to deploy), `upstream` = clouvelai.
+
+---
+
+## Custom domain setup (croissantclub.app)
+
+The app is accessible at **https://croissantclub.app** via a custom domain registered on Cloudflare.
+
+### How it's configured
+
+```
+Browser ──> Cloudflare DNS (DNS only) ──> Railway frontend service
+```
+
+- **Domain registrar**: Cloudflare (also handles DNS)
+- **Cloudflare DNS**: CNAME record pointing `croissantclub.app` to Railway's custom domain target
+- **Cloudflare proxy**: **OFF** (DNS only / grey cloud). Railway handles SSL directly. Turning on Cloudflare's proxy causes 502 errors because it conflicts with Railway's SSL certificate provisioning.
+- **Railway custom domain port**: **8080** (not 80). Even though the Dockerfile sets `ENV PORT=80`, Railway's edge routing requires port 8080 for the custom domain to work.
+
+### Key gotchas
+
+1. **Cloudflare proxy must be OFF** — set the CNAME to "DNS only" (grey cloud icon). The orange cloud (proxied) causes bad gateway errors.
+2. **Port 8080 in Railway** — when adding the custom domain in Railway, set the port to 8080. The default Railway domain (`frontend-production-95af.up.railway.app`) auto-detects the port, but custom domains need it set explicitly.
+3. **SSL is handled by Railway** — Railway auto-provisions a Let's Encrypt certificate for the custom domain. Cloudflare's SSL settings don't matter when proxy is off.
