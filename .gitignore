@@ -41,5 +41,8 @@ backend/uploads/
 # Supabase local temp
 supabase/.temp/
 
+# Data
+data/images/
+
 # Misc
 temp_*
